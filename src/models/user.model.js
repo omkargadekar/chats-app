@@ -1,6 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import { AvailableUserRoles, UserRolesEnum } from "../constants.js";
 
 const userSchema = new Schema(
   {
@@ -19,7 +20,12 @@ const userSchema = new Schema(
       lowecase: true,
       trim: true,
     },
-
+    role: {
+      type: String,
+      enum: AvailableUserRoles,
+      default: UserRolesEnum.USER,
+      required: true,
+    },
     fullName: {
       type: String,
       required: true,
@@ -27,9 +33,15 @@ const userSchema = new Schema(
       index: true,
     },
     avatar: {
-      type: String,
+      type: {
+        url: String,
+        localPath: String,
+      },
+      default: {
+        url: `https://via.placeholder.com/200x200.png`,
+        localPath: "",
+      },
     },
-
     password: {
       type: String,
       required: [true, "Password is required"],
