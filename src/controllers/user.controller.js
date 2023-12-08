@@ -70,7 +70,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const user = await User.create({
     fullName,
-    avatar: avatar.url || avatar, //avatar.url
+    avatar: avatar?.url || avatar, //avatar.url
     email,
     password,
     username: username.toLowerCase(),

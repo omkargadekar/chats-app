@@ -1,12 +1,12 @@
 import mongoose from "mongoose";
-import { ChatEventEnum } from "../../../constants.js";
-import { Chat } from "../../../models/apps/chat-app/chat.models.js";
-import { ChatMessage } from "../../../models/apps/chat-app/message.models.js";
-import { emitSocketEvent } from "../../../socket/index.js";
-import { ApiError } from "../../../utils/ApiError.js";
-import { ApiResponse } from "../../../utils/ApiResponse.js";
-import { asyncHandler } from "../../../utils/asyncHandler.js";
-import { getLocalPath, getStaticFilePath } from "../../../utils/helpers.js";
+import { ChatEventEnum } from "../constants.js";
+import { Chat } from "../models/chat.model.js";
+import { ChatMessage } from "../models/message.model.js";
+import { emitSocketEvent } from "../socket/index.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { getLocalPath, getStaticFilePath } from "../utils/helpers.js";
 
 /**
  * @description Utility function which returns the pipeline stages to structure the chat message schema with common lookups
