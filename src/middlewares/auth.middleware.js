@@ -2,7 +2,7 @@ import { AvailableUserRoles } from "../constants.js";
 import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import jwt from "jsonwebtoken";
+import * as jwt from "jsonwebtoken";
 
 export const verifyJWT = asyncHandler(async (req, res, next) => {
   const token =
@@ -16,7 +16,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
   try {
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
     const user = await User.findById(decodedToken?._id).select(
-      "-password -refreshToken -emailVerificationToken -emailVerificationExpiry"
+      "-password -refreshToken"
     );
     if (!user) {
       // Client should make a request to /api/v1/users/refresh-token if they have refreshToken present in their cookie

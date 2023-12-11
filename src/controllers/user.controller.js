@@ -77,6 +77,11 @@ const registerUser = asyncHandler(async (req, res) => {
     role: role || UserRolesEnum.USER,
   });
 
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+    user._id
+  );
+  await user.updateOne({ refreshToken });
+
   const createdUser = await User.findById(user._id).select(
     "-password -refreshToken"
   );
@@ -85,13 +90,20 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Something went wrong while registering the user");
   }
 
+  const options = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+  };
+  res.cookie("accessToken", accessToken, options);
+  res.cookie("refreshToken", refreshToken, options);
+
   return res
     .status(201)
     .json(
       new ApiResponse(
         200,
-        { user: createdUser },
-        "User registered Successfully"
+        { user: createdUser, accessToken },
+        "User registered and logged in successfully"
       )
     );
 });
