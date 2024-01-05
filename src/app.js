@@ -6,6 +6,17 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { initializeSocketIO } from "./socket/index.js";
 import { ApiError } from "./utils/ApiError.js";
+import swaggerUi from "swagger-ui-express";
+import { fileURLToPath } from "url";
+import YAML from "yaml";
+import path from "path";
+import fs from "fs";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const file = fs.readFileSync(path.resolve(__dirname, "./swagger.yaml"), "utf8");
+const swaggerDocument = YAML.parse(file);
 
 const app = express();
 
@@ -70,6 +81,17 @@ app.use("/api/v1/chat-app/messages", messageRouter);
 // app.post("/api/v1/seed/chat-app", seedUsers, seedChatApp);
 
 initializeSocketIO(io);
+
+app.use(
+  "/swag",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocument, {
+    swaggerOptions: {
+      docExpansion: "none", // keep all the sections collapsed by default
+    },
+    customSiteTitle: "CHAT APP Darren",
+  })
+);
 
 // http://localhost:8000/api/v1/users/register
 
