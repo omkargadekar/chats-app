@@ -7,7 +7,7 @@ info:
 version: 1.0.0
 contact: {}
 servers:
-  - url: "http://localhost:8000/api/v1"
+  - url: "https://chatsapp-nw05.onrender.com/api/v1"
 paths:
   /users/register:
     post:
