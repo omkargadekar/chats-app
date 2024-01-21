@@ -46,41 +46,28 @@ const mountParticipantStoppedTypingEvent = (socket) => {
 const initializeSocketIO = (io) => {
   return io.on("connection", async (socket) => {
     try {
-      // parse the cookies from the handshake headers (This is only possible if client has `withCredentials: true`)
-      const cookies = cookie.parse(socket.handshake.headers?.cookie || "");
-
-      let token = cookies?.accessToken; // get the accessToken
+      const token = socket.handshake.auth?.token;
 
       if (!token) {
-        // If there is no access token in cookies. Check inside the handshake auth
-        token = socket.handshake.auth?.token;
-      }
-
-      if (!token) {
-        // Token is required for the socket to work
         throw new ApiError(401, "Un-authorized handshake. Token is missing");
       }
 
-      const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET); // decode the token
+      const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
       const user = await User.findById(decodedToken?._id).select(
         "-password -refreshToken -emailVerificationToken -emailVerificationExpiry"
       );
 
-      // retrieve the user
       if (!user) {
         throw new ApiError(401, "Un-authorized handshake. Token is invalid");
       }
-      socket.user = user; // mount te user object to the socket
 
-      // We are creating a room with user id so that if user is joined but does not have any active chat going on.
-      // still we want to emit some socket events to the user.
-      // so that the client can catch the event and show the notifications.
+      socket.user = user;
       socket.join(user._id.toString());
-      socket.emit(ChatEventEnum.CONNECTED_EVENT); // emit the connected event so that client is aware
+      socket.emit(ChatEventEnum.CONNECTED_EVENT);
       console.log("User connected 🗼. userId: ", user._id.toString());
 
-      // Common events that needs to be mounted on the initialization
+      // Common events that need to be mounted on initialization
       mountJoinChatEvent(socket);
       mountParticipantTypingEvent(socket);
       mountParticipantStoppedTypingEvent(socket);

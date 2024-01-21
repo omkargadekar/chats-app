@@ -97,15 +97,17 @@ const registerUser = asyncHandler(async (req, res) => {
   res.cookie("accessToken", accessToken, options);
   res.cookie("refreshToken", refreshToken, options);
 
-  return res
-    .status(201)
-    .json(
-      new ApiResponse(
-        200,
-        { user: createdUser, accessToken },
-        "User registered and logged in successfully"
-      )
-    );
+  return res.status(201).json(
+    new ApiResponse(
+      200,
+      {
+        user: createdUser,
+        accessToken,
+        refreshToken,
+      },
+      "User registered and logged in successfully"
+    )
+  );
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -150,22 +152,21 @@ const loginUser = asyncHandler(async (req, res) => {
     secure: process.env.NODE_ENV === "production",
   };
 
-  return res
-    .status(200)
-    .cookie("accessToken", accessToken, options) // set the access token in the cookie
-    .cookie("refreshToken", refreshToken, options) // set the refresh token in the cookie
-    .json(
-      new ApiResponse(
-        200,
-        { user: loggedInUser, accessToken, refreshToken }, // send access and refresh token in response if client decides to save them by themselves
-        "User logged in successfully"
-      )
-    );
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        user: loggedInUser,
+        accessToken,
+        refreshToken,
+      },
+      "User logged in successfully"
+    )
+  );
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-  const incomingRefreshToken =
-    req.cookies.refreshToken || req.body.refreshToken;
+  const incomingRefreshToken = req.body.refreshToken;
 
   if (!incomingRefreshToken) {
     throw new ApiError(401, "Unauthorized request");
@@ -181,32 +182,23 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       throw new ApiError(401, "Invalid refresh token");
     }
 
-    // check if incoming refresh token is same as the refresh token attached in the user document
-    // This shows that the refresh token is used or not
-    // Once it is used, we are replacing it with new refresh token below
     if (incomingRefreshToken !== user?.refreshToken) {
-      // If token is valid but is used already
       throw new ApiError(401, "Refresh token is expired or used");
     }
-    const options = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-    };
 
     const { accessToken, refreshToken: newRefreshToken } =
       await generateAccessAndRefreshTokens(user._id);
 
-    return res
-      .status(200)
-      .cookie("accessToken", accessToken, options)
-      .cookie("refreshToken", newRefreshToken, options)
-      .json(
-        new ApiResponse(
-          200,
-          { accessToken, refreshToken: newRefreshToken },
-          "Access token refreshed"
-        )
-      );
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          accessToken,
+          refreshToken: newRefreshToken,
+        },
+        "Access token refreshed"
+      )
+    );
   } catch (error) {
     throw new ApiError(401, error?.message || "Invalid refresh token");
   }
@@ -223,16 +215,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     { new: true }
   );
 
-  const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-  };
-
-  return res
-    .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
-    .json(new ApiResponse(200, {}, "User logged out"));
+  return res.status(200).json(new ApiResponse(200, {}, "User logged out"));
 });
 
 export { registerUser, loginUser, refreshAccessToken, logoutUser };
