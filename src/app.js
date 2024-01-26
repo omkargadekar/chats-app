@@ -38,6 +38,8 @@ app.use(
   })
 );
 
+initializeSocketIO(io);
+
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 500, // Limit each IP to 500 requests per `window` (here, per 15 minutes)
@@ -79,8 +81,6 @@ app.use("/api/v1/chat-app/chats", chatRouter);
 app.use("/api/v1/chat-app/messages", messageRouter);
 
 // app.post("/api/v1/seed/chat-app", seedUsers, seedChatApp);
-
-initializeSocketIO(io);
 
 app.use(
   "/swag",

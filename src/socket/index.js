@@ -47,6 +47,7 @@ const initializeSocketIO = (io) => {
   return io.on("connection", async (socket) => {
     try {
       const token = socket.handshake.auth?.token;
+      console.log(token);
 
       if (!token) {
         throw new ApiError(401, "Un-authorized handshake. Token is missing");
