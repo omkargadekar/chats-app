@@ -23,7 +23,7 @@ const app = express();
 const httpServer = createServer(app);
 
 const io = new Server(httpServer, {
-  pingTimeout: 600000,
+  pingTimeout: 60000,
   cors: {
     origin: process.env.CORS_ORIGIN,
     credentials: true,
@@ -74,11 +74,15 @@ app.get("/", (req, res) => {
 import userRouter from "./routes/user.routes.js";
 import chatRouter from "./routes/chat.routes.js";
 import messageRouter from "./routes/message.routes.js";
+import eventRouter from "./routes/event.routes.js";
+import newUserRoute from "./routes/newUser.routes.js";
 
 //routes declaration
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/chat-app/chats", chatRouter);
 app.use("/api/v1/chat-app/messages", messageRouter);
+app.use("/api/v1/events", eventRouter);
+app.use("/api/v2/users", newUserRoute);
 
 // app.post("/api/v1/seed/chat-app", seedUsers, seedChatApp);
 
@@ -95,4 +99,4 @@ app.use(
 
 // http://localhost:8000/api/v1/users/register
 
-export { app, httpServer };
+export { app };
