@@ -6,7 +6,7 @@ import {
   updateUser,
   deleteUser,
 } from "../controllers/newUser.controller.js";
-import { verifyJWT } from "../middlewares/verifyJWT.js";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
