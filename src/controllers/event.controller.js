@@ -1,4 +1,4 @@
-import { Event } from "../routes/event.routes.js";
+import Event from "../models/event.model.js";
 
 async function getAllEvents(req, res) {
   try {
