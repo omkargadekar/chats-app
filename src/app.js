@@ -33,7 +33,7 @@ app.set("io", io);
 
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: ["http://localhost:3000", "*"], // Add other domains as needed
     credentials: true,
   })
 );
