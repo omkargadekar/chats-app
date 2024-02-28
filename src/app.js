@@ -25,7 +25,12 @@ const httpServer = createServer(app);
 const io = new Server(httpServer, {
   pingTimeout: 60000,
   cors: {
-    origin: process.env.CORS_ORIGIN,
+    origin: [
+      "http://localhost:3000",
+      "*",
+      "https://chatsapp-nw05.onrender.com",
+      "http://ec2-52-206-76-43.compute-1.amazonaws.com:8000",
+    ],
     credentials: true,
   },
 });
