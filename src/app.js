@@ -33,7 +33,12 @@ app.set("io", io);
 
 app.use(
   cors({
-    origin: ["http://localhost:3000", "*"], // Add other domains as needed
+    origin: [
+      "http://localhost:3000",
+      "*",
+      "https://chatsapp-nw05.onrender.com",
+      "http://ec2-52-206-76-43.compute-1.amazonaws.com:8000",
+    ], // Add other domains as needed
     credentials: true,
   })
 );
@@ -76,6 +81,7 @@ import chatRouter from "./routes/chat.routes.js";
 import messageRouter from "./routes/message.routes.js";
 import eventRouter from "./routes/event.routes.js";
 import newUserRoute from "./routes/newUser.routes.js";
+import licenseRute from "./routes/license.routes.js";
 
 //routes declaration
 app.use("/api/v1/users", userRouter);
@@ -83,6 +89,7 @@ app.use("/api/v1/chat-app/chats", chatRouter);
 app.use("/api/v1/chat-app/messages", messageRouter);
 app.use("/api/v1/events", eventRouter);
 app.use("/api/v2/users", newUserRoute);
+app.use("/api/v2/license", licenseRute);
 
 // app.post("/api/v1/seed/chat-app", seedUsers, seedChatApp);
 
