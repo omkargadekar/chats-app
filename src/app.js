@@ -41,6 +41,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
+      "http://localhost:3030",
       "*",
       "https://chatsapp-nw05.onrender.com",
       "http://ec2-52-206-76-43.compute-1.amazonaws.com:8000",
