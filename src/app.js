@@ -89,6 +89,7 @@ import messageRouter from "./routes/message.routes.js";
 import eventRouter from "./routes/event.routes.js";
 import newUserRoute from "./routes/newUser.routes.js";
 import licenseRute from "./routes/license.routes.js";
+import taskRoute from "./routes/task.routes.js";
 
 //routes declaration
 app.use("/api/v1/users", userRouter);
@@ -97,6 +98,7 @@ app.use("/api/v1/chat-app/messages", messageRouter);
 app.use("/api/v1/events", eventRouter);
 app.use("/api/v2/users", newUserRoute);
 app.use("/api/v2/license", licenseRute);
+app.use("/api/v1/tasks", taskRoute);
 
 // app.post("/api/v1/seed/chat-app", seedUsers, seedChatApp);
 
