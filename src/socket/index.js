@@ -5,6 +5,9 @@ import { AvailableChatEvents, ChatEventEnum } from "../constants.js";
 import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 
+// Define unreadMessageCounts object to store unread message counts for each chat
+let unreadMessageCounts = {};
+
 /**
  * @description This function is responsible to allow user to join the chat represented by chatId (chatId). event happens when user switches between the chats
  * @param {Socket<import("socket.io/dist/typed-events").DefaultEventsMap, import("socket.io/dist/typed-events").DefaultEventsMap, import("socket.io/dist/typed-events").DefaultEventsMap, any>} socket
@@ -16,6 +19,12 @@ const mountJoinChatEvent = (socket) => {
     // E.g. When user types we don't want to emit that event to specific participant.
     // We want to just emit that to the chat where the typing is happening
     socket.join(chatId);
+
+    // Send unread message count for the chat to the client
+    socket.emit(ChatEventEnum.UNREAD_MESSAGE_COUNT_EVENT, {
+      chatId: chatId,
+      unreadCount: unreadMessageCounts[chatId] || 0,
+    });
   });
 };
 
@@ -73,11 +82,43 @@ const initializeSocketIO = (io) => {
       mountParticipantTypingEvent(socket);
       mountParticipantStoppedTypingEvent(socket);
 
+      // Function to handle disconnect event
       socket.on(ChatEventEnum.DISCONNECT_EVENT, () => {
         console.log("user has disconnected 🚫. userId: " + socket.user?._id);
         if (socket.user?._id) {
           socket.leave(socket.user._id);
         }
+      });
+
+      // Function to handle new message event
+      socket.on(ChatEventEnum.NEW_MESSAGE_EVENT, (message) => {
+        // Check if the chat window is open for the recipient
+        if (!chatWindows[message.chatId].isOpen) {
+          // Increment unread message count for the chat
+          unreadMessageCounts[message.chatId] =
+            (unreadMessageCounts[message.chatId] || 0) + 1;
+
+          // Emit unread message count to the client
+          io.to(message.recipientUserId).emit(
+            ChatEventEnum.UNREAD_MESSAGE_COUNT_EVENT,
+            {
+              chatId: message.chatId,
+              unreadCount: unreadMessageCounts[message.chatId],
+            }
+          );
+        }
+      });
+
+      // Function to handle messages read event
+      socket.on(ChatEventEnum.MESSAGES_READ_EVENT, (chatId) => {
+        // Reset unread message count for the chat
+        unreadMessageCounts[chatId] = 0;
+      });
+
+      // Function to handle chat opened event
+      socket.on(ChatEventEnum.CHAT_OPENED_EVENT, (chatId) => {
+        // Reset unread message count for the chat to zero
+        unreadMessageCounts[chatId] = 0;
       });
     } catch (error) {
       socket.emit(

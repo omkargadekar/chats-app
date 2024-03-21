@@ -25,6 +25,10 @@ export const ChatEventEnum = Object.freeze({
   STOP_TYPING_EVENT: "stopTyping",
 
   TYPING_EVENT: "typing",
+
+  UNREAD_MESSAGE_COUNT_EVENT: "unreadMessageCount",
+
+  CHAT_OPENED_EVENT: "chatOpened",
 });
 
 export const AvailableChatEvents = Object.values(ChatEventEnum);
