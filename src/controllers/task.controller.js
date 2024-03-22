@@ -4,23 +4,21 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const createTask = asyncHandler(async (req, res) => {
   try {
-    const userId = req.user._id; // Extracted from JWT after successful verification
+    const userId = req.user._id;
     const { textContent, status, completionPercentage } = req.body;
-    let imageUrl = ""; // Default value in case there's no image
+    let imageUrl = "";
 
-    // Validate required fields
     if (!textContent || !status || !completionPercentage) {
       return res
         .status(400)
         .json({ message: "Please provide all required fields." });
     }
 
-    // Handle image upload if file is present
     if (req.file) {
-      const localFilePath = req.file.path; // Path where multer temporarily stores the file
-      const uploadResponse = await uploadOnCloudinary(localFilePath); // Upload the image to Cloudinary
+      const localFilePath = req.file.path;
+      const uploadResponse = await uploadOnCloudinary(localFilePath);
       if (uploadResponse && uploadResponse.url) {
-        imageUrl = uploadResponse.url; // Use the URL from the Cloudinary response
+        imageUrl = uploadResponse.url;
       } else {
         return res
           .status(500)
@@ -28,7 +26,6 @@ const createTask = asyncHandler(async (req, res) => {
       }
     }
 
-    // Create the task with the provided details and the image URL (if any)
     const task = await Task.create({
       userId,
       textContent,

@@ -27,18 +27,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
-  // get user details from frontend
-  // validation - not empty
-  // check if user already exists: username, email
-  // check for images, check for avatar
-  // upload them to cloudinary, avatar
-  // create user object - create entry in db
-  // remove password and refresh token field from response
-  // check for user creation
-  // return res
-
   const { fullName, email, username, password, role } = req.body;
-  //console.log("email: ", email);
 
   if (
     [fullName, email, username, password].some((field) => field?.trim() === "")
@@ -111,14 +100,6 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-  // get user details from frontend
-  // validation - not empty
-  // check if user exists: email
-  // check if password matches
-  // generate and store a new refresh token
-  // remove password field from response
-  // return res
-
   const { email, password } = req.body;
 
   if ([email, password].some((field) => field?.trim() === "")) {
@@ -141,12 +122,10 @@ const loginUser = asyncHandler(async (req, res) => {
     user._id
   );
 
-  // get the user document ignoring the password and refreshToken field
   const loggedInUser = await User.findById(user._id).select(
     "-password -refreshToken"
   );
 
-  // TODO: Add more options to make cookie more secure and reliable
   const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

@@ -11,7 +11,6 @@ async function getAllEvents(req, res) {
   }
 }
 
-// Get a single event by ID
 async function getSingleEvent(req, res) {
   try {
     const event = await Event.findById(req.params.id);
@@ -26,7 +25,6 @@ async function getSingleEvent(req, res) {
   }
 }
 
-// Create a new event
 async function createEvent(req, res) {
   const newEvent = new Event(req.body);
   try {
@@ -39,7 +37,6 @@ async function createEvent(req, res) {
   }
 }
 
-// Update an event
 async function updateEvent(req, res) {
   try {
     const updatedEvent = await Event.findByIdAndUpdate(
@@ -58,7 +55,6 @@ async function updateEvent(req, res) {
   }
 }
 
-// Delete an event
 async function deleteEvent(req, res) {
   try {
     const deletedEvent = await Event.findByIdAndDelete(req.params.id);

@@ -16,7 +16,7 @@ const createLicense = asyncHandler(async (req, res) => {
   if (req.files?.agentImage) {
     const agentImageLocalPath = req.files.agentImage[0]?.path;
     const uploadedImage = await uploadOnCloudinary(agentImageLocalPath);
-    agentImageUrl = uploadedImage?.url || ""; // Use the uploaded image URL or set to default
+    agentImageUrl = uploadedImage?.url || "";
   }
 
   // Create License object and save to the database

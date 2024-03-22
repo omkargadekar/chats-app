@@ -9,10 +9,6 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { removeLocalFile } from "../utils/helpers.js";
 
-/**
- * @description Utility function which returns the pipeline stages to structure the chat schema with common lookups
- * @returns {mongoose.PipelineStage[]}
- */
 const chatCommonAggregation = () => {
   return [
     {
@@ -78,11 +74,6 @@ const chatCommonAggregation = () => {
   ];
 };
 
-/**
- *
- * @param {string} chatId
- * @description utility function responsible for removing all the messages and file attachments attached to the deleted chat
- */
 const deleteCascadeChatMessages = async (chatId) => {
   // fetch the messages associated with the chat to remove
   const messages = await ChatMessage.find({
@@ -150,8 +141,7 @@ const createOrGetAOneOnOneChat = asyncHandler(async (req, res) => {
   const chat = await Chat.aggregate([
     {
       $match: {
-        isGroupChat: false, // avoid group chats. This controller is responsible for one on one chats
-        // Also, filter chats with participants having receiver and logged in user only
+        isGroupChat: false,
         $and: [
           {
             participants: { $elemMatch: { $eq: req.user._id } },
@@ -168,20 +158,17 @@ const createOrGetAOneOnOneChat = asyncHandler(async (req, res) => {
   ]);
 
   if (chat.length) {
-    // if we find the chat that means user already has created a chat
     return res
       .status(200)
       .json(new ApiResponse(200, chat[0], "Chat retrieved successfully"));
   }
 
-  // if not we need to create a new one on one chat
   const newChatInstance = await Chat.create({
     name: "One on one chat",
     participants: [req.user._id, new mongoose.Types.ObjectId(receiverId)], // add receiver and logged in user as participants
     admin: req.user._id,
   });
 
-  // structure the chat as per the common aggregation to keep the consistency
   const createdChat = await Chat.aggregate([
     {
       $match: {
@@ -199,7 +186,7 @@ const createOrGetAOneOnOneChat = asyncHandler(async (req, res) => {
 
   // logic to emit socket event about the new chat added to the participants
   payload?.participants?.forEach((participant) => {
-    if (participant._id.toString() === req.user._id.toString()) return; // don't emit the event for the logged in use as he is the one who is initiating the chat
+    if (participant._id.toString() === req.user._id.toString()) return;
 
     // emit event to other participants with new chat as a payload
     emitSocketEvent(
@@ -218,7 +205,6 @@ const createOrGetAOneOnOneChat = asyncHandler(async (req, res) => {
 const createAGroupChat = asyncHandler(async (req, res) => {
   const { name, participants } = req.body;
 
-  // Check if user is not sending himself as a participant. This will be done manually
   if (participants.includes(req.user._id.toString())) {
     throw new ApiError(
       400,
@@ -229,15 +215,12 @@ const createAGroupChat = asyncHandler(async (req, res) => {
   const members = [...new Set([...participants, req.user._id.toString()])]; // check for duplicates
 
   if (members.length < 3) {
-    // check after removing the duplicate
-    // We want group chat to have minimum 3 members including admin
     throw new ApiError(
       400,
       "Seems like you have passed duplicate participants."
     );
   }
 
-  // Create a group chat with provided members
   const groupChat = await Chat.create({
     name,
     isGroupChat: true,
@@ -245,7 +228,6 @@ const createAGroupChat = asyncHandler(async (req, res) => {
     admin: req.user._id,
   });
 
-  // structure the chat
   const chat = await Chat.aggregate([
     {
       $match: {
@@ -261,9 +243,8 @@ const createAGroupChat = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Internal server error");
   }
 
-  // logic to emit socket event about the new group chat added to the participants
   payload?.participants?.forEach((participant) => {
-    if (participant._id.toString() === req.user._id.toString()) return; // don't emit the event for the logged in use as he is the one who is initiating the chat
+    if (participant._id.toString() === req.user._id.toString()) return;
     // emit event to other participants with new chat as a payload
     emitSocketEvent(
       req,
@@ -383,19 +364,17 @@ const deleteGroupChat = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Group chat does not exist");
   }
 
-  // check if the user who is deleting is the group admin
   if (chat.admin?.toString() !== req.user._id?.toString()) {
     throw new ApiError(404, "Only admin can delete the group");
   }
 
-  await Chat.findByIdAndDelete(chatId); // delete the chat
+  await Chat.findByIdAndDelete(chatId);
 
-  await deleteCascadeChatMessages(chatId); // remove all messages and attachments associated with the chat
+  await deleteCascadeChatMessages(chatId);
 
-  // logic to emit socket event about the group chat deleted to the participants
   chat?.participants?.forEach((participant) => {
-    if (participant._id.toString() === req.user._id.toString()) return; // don't emit the event for the logged in use as he is the one who is deleting
-    // emit event to other participants with left chat as a payload
+    if (participant._id.toString() === req.user._id.toString()) return;
+
     emitSocketEvent(
       req,
       participant._id?.toString(),
@@ -428,15 +407,14 @@ const deleteOneOnOneChat = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Chat does not exist");
   }
 
-  await Chat.findByIdAndDelete(chatId); // delete the chat even if user is not admin because it's a personal chat
+  await Chat.findByIdAndDelete(chatId);
 
-  await deleteCascadeChatMessages(chatId); // delete all the messages and attachments associated with the chat
+  await deleteCascadeChatMessages(chatId);
 
   const otherParticipant = payload?.participants?.find(
-    (participant) => participant?._id.toString() !== req.user._id.toString() // get the other participant in chat for socket
+    (participant) => participant?._id.toString() !== req.user._id.toString()
   );
 
-  // emit event to other participant with left chat as a payload
   emitSocketEvent(
     req,
     otherParticipant._id?.toString(),
@@ -464,7 +442,6 @@ const leaveGroupChat = asyncHandler(async (req, res) => {
 
   const existingParticipants = groupChat.participants;
 
-  // check if the participant that is leaving the group, is part of the group
   if (!existingParticipants?.includes(req.user?._id)) {
     throw new ApiError(400, "You are not a part of this group chat");
   }
