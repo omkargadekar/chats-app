@@ -650,7 +650,7 @@ const getAllChats = asyncHandler(async (req, res) => {
     .sort({ updatedAt: -1 })
     .populate({
       path: "participants",
-      select: "-password", // Exclude password field
+      select: "-password -refreshToken ", // Exclude password field
     })
     .populate("lastMessage")
     .exec();
@@ -690,17 +690,14 @@ const markChatAsRead = asyncHandler(async (req, res) => {
   const { chatId } = req.params;
 
   // Mark messages as read for the user in the specified chat
-  await Chat.updateMany(
+  await ChatMessage.updateMany(
     {
-      _id: chatId,
-      "messages.recipient": req.user._id,
-      "messages.read": false,
+      chat: chatId,
+      recipient: req.user._id,
+      read: false,
     },
     {
-      $set: { "messages.$[msg].read": true },
-    },
-    {
-      arrayFilters: [{ "msg.recipient": req.user._id }],
+      $set: { read: true },
     }
   );
 
