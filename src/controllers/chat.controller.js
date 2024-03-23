@@ -600,7 +600,7 @@ const getAllChats = asyncHandler(async (req, res) => {
   const chatsWithUnreadCount = await Chat.aggregate([
     {
       $match: {
-        participants: { $elemMatch: { $eq: req.user._id } }, // get all chats that have logged in user as a participant
+        participants: { $elemMatch: { $eq: req.user._id } },
       },
     },
     {
@@ -611,7 +611,7 @@ const getAllChats = asyncHandler(async (req, res) => {
     ...chatCommonAggregation(),
     {
       $lookup: {
-        from: "chatmessages", // Assuming the collection name is 'chatmessages'
+        from: "chatmessages",
         let: { chatId: "$_id", userId: req.user._id },
         pipeline: [
           {
@@ -633,7 +633,9 @@ const getAllChats = asyncHandler(async (req, res) => {
       },
     },
   ]);
+
   console.log(chatsWithUnreadCount);
+
   // Merge unread message count with chats
   const chats = chatsWithUnreadCount.map((chat) => {
     const unreadCount =
@@ -647,6 +649,7 @@ const getAllChats = asyncHandler(async (req, res) => {
       new ApiResponse(200, chats || [], "User chats fetched successfully!")
     );
 });
+
 // Controller logic to mark messages as read and update unread count to zero
 const markChatAsRead = asyncHandler(async (req, res) => {
   const { chatId } = req.params;
