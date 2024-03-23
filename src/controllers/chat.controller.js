@@ -167,6 +167,10 @@ const createOrGetAOneOnOneChat = asyncHandler(async (req, res) => {
     name: "One on one chat",
     participants: [req.user._id, new mongoose.Types.ObjectId(receiverId)], // add receiver and logged in user as participants
     admin: req.user._id,
+    unreadCounts: [
+      { user: req.user._id, count: 0 },
+      { user: new mongoose.Types.ObjectId(receiverId), count: 0 },
+    ],
   });
 
   const createdChat = await Chat.aggregate([
@@ -643,6 +647,39 @@ const getAllChats = asyncHandler(async (req, res) => {
       new ApiResponse(200, chats || [], "User chats fetched successfully!")
     );
 });
+// Controller logic to mark messages as read and update unread count to zero
+const markChatAsRead = asyncHandler(async (req, res) => {
+  const { chatId } = req.params;
+
+  // Mark messages as read for the user in the specified chat
+  await Chat.updateMany(
+    {
+      _id: chatId,
+      "messages.recipient": req.user._id,
+      "messages.read": false,
+    },
+    {
+      $set: { "messages.$[msg].read": true },
+    },
+    {
+      arrayFilters: [{ "msg.recipient": req.user._id }],
+    }
+  );
+
+  // Update unread message count to zero for the user's chat
+  await Chat.updateOne(
+    {
+      _id: chatId,
+      "unreadCounts.user": req.user._id,
+    },
+    {
+      $set: { "unreadCounts.$.count": 0 }, // Set unread count to 0
+    }
+  );
+
+  // Return success response
+  return res.status(200).json({ message: "Chat marked as read successfully" });
+});
 
 export {
   addNewParticipantInGroupChat,
@@ -656,4 +693,5 @@ export {
   removeParticipantFromGroupChat,
   renameGroupChat,
   searchAvailableUsers,
+  markChatAsRead,
 };

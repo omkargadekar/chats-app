@@ -11,6 +11,7 @@ import {
   removeParticipantFromGroupChat,
   renameGroupChat,
   searchAvailableUsers,
+  markChatAsRead,
 } from "../controllers/chat.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import {
@@ -73,5 +74,9 @@ router
 router
   .route("/remove/:chatId")
   .delete(mongoIdPathVariableValidator("chatId"), validate, deleteOneOnOneChat);
+
+router
+  .route("/:chatId/markAsRead")
+  .post(mongoIdPathVariableValidator("chatId"), markChatAsRead);
 
 export default router;
