@@ -597,56 +597,7 @@ const removeParticipantFromGroupChat = asyncHandler(async (req, res) => {
 });
 
 const getAllChats = asyncHandler(async (req, res) => {
-  // const chatsWithUnreadCount = await Chat.aggregate([
-  //   {
-  //     $match: {
-  //       participants: { $elemMatch: { $eq: req.user._id } },
-  //     },
-  //   },
-  //   {
-  //     $sort: {
-  //       updatedAt: -1,
-  //     },
-  //   },
-  //   ...chatCommonAggregation(),
-  //   {
-  //     $lookup: {
-  //       from: "chatmessages",
-  //       let: { chatId: "$_id", userId: req.user._id },
-  //       pipeline: [
-  //         {
-  //           $match: {
-  //             $expr: {
-  //               $and: [
-  //                 { $eq: ["$chat", "$$chatId"] },
-  //                 { $eq: ["$recipient", "$$userId"] },
-  //                 { $eq: ["$read", false] },
-  //               ],
-  //             },
-  //           },
-  //         },
-  //         {
-  //           $count: "unreadCount",
-  //         },
-  //       ],
-  //       as: "unreadCounts",
-  //     },
-  //   },
-  // ]);
-
-  // Merge unread message count with chats
-  // const chats = chatsWithUnreadCount.map((chat) => {
-  //   const unreadCount =
-  //     chat.unreadCounts.length > 0 ? chat.unreadCounts[0].unreadCount : 0;
-  //   return { ...chat, unreadCount };
-  // });
-
-  // return res
-  //   .status(200)
-  //   .json(
-  //     new ApiResponse(200, chats || [], "User chats fetched successfully!")
-  //   );
-
+  // Fetch all chats where the logged-in user is a participant
   const chats = await Chat.find({
     participants: req.user._id,
   })
@@ -656,13 +607,32 @@ const getAllChats = asyncHandler(async (req, res) => {
   // Fetch unread message counts for each chat
   const chatsWithUnreadCount = await Promise.all(
     chats.map(async (chat) => {
-      const unreadCount = await ChatMessage.countDocuments({
-        chat: chat._id,
-        recipient: req.user._id,
-        read: false,
-      }).exec();
+      const unreadCounts = await ChatMessage.aggregate([
+        {
+          $match: {
+            chat: chat._id,
+            recipient: req.user._id,
+            read: false,
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalUnreadCount: { $sum: 1 },
+          },
+        },
+      ]);
 
-      return { ...chat.toObject(), unreadCount }; // Merge unread count with chat object
+      const unreadCount =
+        unreadCounts.length > 0 ? unreadCounts[0].totalUnreadCount : 0;
+
+      // Populate the last message for the chat
+      const lastMessage = await ChatMessage.findOne({ chat: chat._id })
+        .sort({ createdAt: -1 })
+        .populate("sender")
+        .exec();
+
+      return { ...chat.toObject(), unreadCount, lastMessage }; // Merge unread count and last message with chat object
     })
   );
 
@@ -673,7 +643,6 @@ const getAllChats = asyncHandler(async (req, res) => {
     success: true,
   });
 });
-
 // Controller logic to mark messages as read and update unread count to zero
 const markChatAsRead = asyncHandler(async (req, res) => {
   const { chatId } = req.params;
