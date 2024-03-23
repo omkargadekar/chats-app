@@ -122,6 +122,9 @@ const sendMessage = asyncHandler(async (req, res) => {
     }
   );
 
+  const updatedChat = await Chat.findById(chatId);
+
+  // Extract the unread count for the current user
   const unreadCount =
     updatedChat.unreadCounts.find((unread) => unread.user.equals(req.user._id))
       ?.count || 0;
