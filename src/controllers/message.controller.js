@@ -82,7 +82,7 @@ const sendMessage = asyncHandler(async (req, res) => {
   if (!selectedChat) {
     throw new ApiError(404, "Chat does not exist");
   }
-
+  console.log("Before updating unread counts:", selectedChat);
   const messageFiles = [];
 
   if (req.files && req.files.attachments?.length > 0) {
@@ -102,19 +102,31 @@ const sendMessage = asyncHandler(async (req, res) => {
   });
 
   // Increment unread count for all participants except the sender
-  for (const participantId of selectedChat.participants) {
+  selectedChat.participants.forEach(async (participantId) => {
     if (participantId.toString() !== req.user._id.toString()) {
-      const participant = selectedChat.unreadCounts.find(
-        (unread) => unread.user.toString() === participantId.toString()
+      await Chat.updateOne(
+        {
+          _id: chatId,
+          "unreadCounts.user": participantId,
+        },
+        {
+          $inc: { "unreadCounts.$.count": 1 },
+        }
       );
-      if (participant) {
-        participant.count += 1;
-      }
-    }
-  }
 
-  // Save the updated chat with incremented unread counts
-  await selectedChat.save();
+      // Log the updated unread count for the participant
+      const updatedChat = await Chat.findById(chatId);
+      const unreadCount = updatedChat.unreadCounts.find(
+        (unread) => unread.user.toString() === participantId.toString()
+      ).count;
+      console.log(
+        `Unread count for participant ${participantId}:`,
+        unreadCount
+      );
+    }
+  });
+
+  console.log("After updating unread counts:", selectedChat);
 
   const chat = await Chat.findByIdAndUpdate(
     chatId,
@@ -125,6 +137,7 @@ const sendMessage = asyncHandler(async (req, res) => {
     },
     { new: true }
   );
+
   const unreadCount = chat.unreadCounts.find(
     (unread) => unread.user.toString() === req.user._id.toString()
   ).count;
