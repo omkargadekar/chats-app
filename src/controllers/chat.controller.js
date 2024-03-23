@@ -597,57 +597,81 @@ const removeParticipantFromGroupChat = asyncHandler(async (req, res) => {
 });
 
 const getAllChats = asyncHandler(async (req, res) => {
-  const chatsWithUnreadCount = await Chat.aggregate([
-    {
-      $match: {
-        participants: { $elemMatch: { $eq: req.user._id } },
-      },
-    },
-    {
-      $sort: {
-        updatedAt: -1,
-      },
-    },
-    ...chatCommonAggregation(),
-    {
-      $lookup: {
-        from: "chatmessages",
-        let: { chatId: "$_id", userId: req.user._id },
-        pipeline: [
-          {
-            $match: {
-              $expr: {
-                $and: [
-                  { $eq: ["$chat", "$$chatId"] },
-                  { $eq: ["$recipient", "$$userId"] },
-                  { $eq: ["$read", false] },
-                ],
-              },
-            },
-          },
-          {
-            $count: "unreadCount",
-          },
-        ],
-        as: "unreadCounts",
-      },
-    },
-  ]);
-
-  console.log(chatsWithUnreadCount);
+  // const chatsWithUnreadCount = await Chat.aggregate([
+  //   {
+  //     $match: {
+  //       participants: { $elemMatch: { $eq: req.user._id } },
+  //     },
+  //   },
+  //   {
+  //     $sort: {
+  //       updatedAt: -1,
+  //     },
+  //   },
+  //   ...chatCommonAggregation(),
+  //   {
+  //     $lookup: {
+  //       from: "chatmessages",
+  //       let: { chatId: "$_id", userId: req.user._id },
+  //       pipeline: [
+  //         {
+  //           $match: {
+  //             $expr: {
+  //               $and: [
+  //                 { $eq: ["$chat", "$$chatId"] },
+  //                 { $eq: ["$recipient", "$$userId"] },
+  //                 { $eq: ["$read", false] },
+  //               ],
+  //             },
+  //           },
+  //         },
+  //         {
+  //           $count: "unreadCount",
+  //         },
+  //       ],
+  //       as: "unreadCounts",
+  //     },
+  //   },
+  // ]);
 
   // Merge unread message count with chats
-  const chats = chatsWithUnreadCount.map((chat) => {
-    const unreadCount =
-      chat.unreadCounts.length > 0 ? chat.unreadCounts[0].unreadCount : 0;
-    return { ...chat, unreadCount };
-  });
+  // const chats = chatsWithUnreadCount.map((chat) => {
+  //   const unreadCount =
+  //     chat.unreadCounts.length > 0 ? chat.unreadCounts[0].unreadCount : 0;
+  //   return { ...chat, unreadCount };
+  // });
 
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(200, chats || [], "User chats fetched successfully!")
-    );
+  // return res
+  //   .status(200)
+  //   .json(
+  //     new ApiResponse(200, chats || [], "User chats fetched successfully!")
+  //   );
+
+  const chats = await Chat.find({
+    participants: req.user._id,
+  })
+    .sort({ updatedAt: -1 })
+    .exec();
+
+  // Fetch unread message counts for each chat
+  const chatsWithUnreadCount = await Promise.all(
+    chats.map(async (chat) => {
+      const unreadCount = await ChatMessage.countDocuments({
+        chat: chat._id,
+        recipient: req.user._id,
+        read: false,
+      }).exec();
+
+      return { ...chat.toObject(), unreadCount }; // Merge unread count with chat object
+    })
+  );
+
+  return res.status(200).json({
+    statusCode: 200,
+    data: chatsWithUnreadCount,
+    message: "User chats fetched successfully!",
+    success: true,
+  });
 });
 
 // Controller logic to mark messages as read and update unread count to zero
