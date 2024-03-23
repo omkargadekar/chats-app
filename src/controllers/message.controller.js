@@ -122,6 +122,9 @@ const sendMessage = asyncHandler(async (req, res) => {
     }
   );
 
+  const unreadCount =
+    updatedChat.unreadCounts.find((unread) => unread.user.equals(req.user._id))
+      ?.count || 0;
   // structure the message
   const messages = await ChatMessage.aggregate([
     {
@@ -152,7 +155,14 @@ const sendMessage = asyncHandler(async (req, res) => {
 
   return res
     .status(201)
-    .json(new ApiResponse(201, receivedMessage, "Message saved successfully"));
+    .json(
+      new ApiResponse(
+        201,
+        receivedMessage,
+        unreadCount,
+        "Message saved successfully"
+      )
+    );
 });
 
 export { getAllMessages, sendMessage };
