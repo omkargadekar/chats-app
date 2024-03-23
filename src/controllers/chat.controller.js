@@ -596,6 +596,54 @@ const removeParticipantFromGroupChat = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, payload, "Participant removed successfully"));
 });
 
+// const getAllChats = asyncHandler(async (req, res) => {
+//   // Fetch all chats where the logged-in user is a participant
+//   const chats = await Chat.find({
+//     participants: req.user._id,
+//   })
+//     .sort({ updatedAt: -1 })
+//     .exec();
+
+//   // Fetch unread message counts for each chat
+//   const chatsWithUnreadCount = await Promise.all(
+//     chats.map(async (chat) => {
+//       const unreadCounts = await ChatMessage.aggregate([
+//         {
+//           $match: {
+//             chat: chat._id,
+//             recipient: req.user._id,
+//             read: false,
+//           },
+//         },
+//         {
+//           $group: {
+//             _id: null,
+//             totalUnreadCount: { $sum: 1 },
+//           },
+//         },
+//       ]);
+
+//       const unreadCount =
+//         unreadCounts.length > 0 ? unreadCounts[0].totalUnreadCount : 0;
+
+//       // Populate the last message for the chat
+//       const lastMessage = await ChatMessage.findOne({ chat: chat._id })
+//         .sort({ createdAt: -1 })
+//         .populate("sender")
+//         .exec();
+
+//       return { ...chat.toObject(), unreadCount, lastMessage }; // Merge unread count and last message with chat object
+//     })
+//   );
+
+//   return res.status(200).json({
+//     statusCode: 200,
+//     data: chatsWithUnreadCount,
+//     message: "User chats fetched successfully!",
+//     success: true,
+//   });
+// });
+
 const getAllChats = asyncHandler(async (req, res) => {
   // Fetch all chats where the logged-in user is a participant
   const chats = await Chat.find({
@@ -632,7 +680,18 @@ const getAllChats = asyncHandler(async (req, res) => {
         .populate("sender")
         .exec();
 
-      return { ...chat.toObject(), unreadCount, lastMessage }; // Merge unread count and last message with chat object
+      // Populate participants with their full information
+      const populatedParticipants = await User.populate(chat.participants, {
+        path: "participants",
+        select: "-password", // Exclude password field from participants
+      });
+
+      return {
+        ...chat.toObject(),
+        unreadCount,
+        lastMessage,
+        participants: populatedParticipants,
+      }; // Merge unread count, last message, and participants with chat object
     })
   );
 
@@ -643,6 +702,7 @@ const getAllChats = asyncHandler(async (req, res) => {
     success: true,
   });
 });
+
 // Controller logic to mark messages as read and update unread count to zero
 const markChatAsRead = asyncHandler(async (req, res) => {
   const { chatId } = req.params;
