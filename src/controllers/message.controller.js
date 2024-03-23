@@ -101,6 +101,21 @@ const sendMessage = asyncHandler(async (req, res) => {
     attachments: messageFiles,
   });
 
+  // Increment unread count for all participants except the sender
+  selectedChat.participants.forEach(async (participantId) => {
+    if (participantId.toString() !== req.user._id.toString()) {
+      await Chat.updateOne(
+        {
+          _id: chatId,
+          "unreadCounts.user": participantId,
+        },
+        {
+          $inc: { "unreadCounts.$.count": 1 },
+        }
+      );
+    }
+  });
+
   const chat = await Chat.findByIdAndUpdate(
     chatId,
     {
@@ -112,22 +127,22 @@ const sendMessage = asyncHandler(async (req, res) => {
   );
 
   // Update unread message count for all participants except the sender
-  await Chat.updateMany(
-    {
-      _id: chatId,
-      participants: { $ne: req.user._id }, // Exclude the sender
-    },
-    {
-      $inc: { "unreadCounts.$[].count": 1 }, // Increment unread count for all participants
-    }
-  );
+  // await Chat.updateMany(
+  //   {
+  //     _id: chatId,
+  //     participants: { $ne: req.user._id }, // Exclude the sender
+  //   },
+  //   {
+  //     $inc: { "unreadCounts.$[].count": 1 }, // Increment unread count for all participants
+  //   }
+  // );
 
-  const updatedChat = await Chat.findById(chatId);
+  // const updatedChat = await Chat.findById(chatId);
 
-  // Extract the unread count for the current user
-  const unreadCount =
-    updatedChat.unreadCounts.find((unread) => unread.user.equals(req.user._id))
-      ?.count || 0;
+  // // Extract the unread count for the current user
+  // const unreadCount =
+  //   updatedChat.unreadCounts.find((unread) => unread.user.equals(req.user._id))
+  //     ?.count || 0;
   // structure the message
   const messages = await ChatMessage.aggregate([
     {
