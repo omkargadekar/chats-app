@@ -155,17 +155,24 @@ const sendMessage = asyncHandler(async (req, res) => {
       receivedMessage
     );
   });
+  return res.status(201).json({
+    statusCode: 201,
+    data: receivedMessage,
+    unreadCount: unreadCount,
+    message: "Message saved successfully",
+    success: true,
+  });
 
-  return res
-    .status(201)
-    .json(
-      new ApiResponse(
-        201,
-        receivedMessage,
-        unreadCount,
-        "Message saved successfully"
-      )
-    );
+  // return res;
+  // .status(201)
+  // .json(
+  //   new ApiResponse(
+  //     201,
+  //     receivedMessage,
+  //     unreadCount,
+  //     "Message saved successfully"
+  //   )
+  // );
 });
 
 export { getAllMessages, sendMessage };
