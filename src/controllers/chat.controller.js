@@ -646,54 +646,36 @@ const removeParticipantFromGroupChat = asyncHandler(async (req, res) => {
 
 const getAllChats = asyncHandler(async (req, res) => {
   // Fetch all chats where the logged-in user is a participant
-  const chats = await Chat.find({
-    participants: req.user._id,
-  })
+  const chats = await Chat.find({ participants: req.user._id })
     .sort({ updatedAt: -1 })
+    .populate({
+      path: "participants",
+      select: "-password", // Exclude password field
+    })
+    .populate("lastMessage")
     .exec();
 
   // Fetch unread message counts for each chat
-  const chatsWithUnreadCount = await Promise.all(
-    chats.map(async (chat) => {
-      const unreadCounts = await ChatMessage.aggregate([
-        {
-          $match: {
-            chat: chat._id,
-            recipient: req.user._id,
-            read: false,
-          },
-        },
-        {
-          $group: {
-            _id: null,
-            totalUnreadCount: { $sum: 1 },
-          },
-        },
-      ]);
+  const unreadCountsPromises = chats.map(async (chat) => {
+    const unreadCount = await ChatMessage.countDocuments({
+      chat: chat._id,
+      recipient: req.user._id,
+      read: false,
+    });
+    return { chatId: chat._id, unreadCount };
+  });
 
-      const unreadCount =
-        unreadCounts.length > 0 ? unreadCounts[0].totalUnreadCount : 0;
+  // Wait for all unread count queries to complete
+  const unreadCounts = await Promise.all(unreadCountsPromises);
 
-      // Populate the last message for the chat
-      const lastMessage = await ChatMessage.findOne({ chat: chat._id })
-        .sort({ createdAt: -1 })
-        .populate("sender")
-        .exec();
-
-      // Populate participants with their full information
-      const populatedParticipants = await User.populate(chat.participants, {
-        path: "participants",
-        select: "-password", // Exclude password field from participants
-      });
-
-      return {
-        ...chat.toObject(),
-        unreadCount,
-        lastMessage,
-        participants: populatedParticipants,
-      }; // Merge unread count, last message, and participants with chat object
-    })
-  );
+  // Merge unread message counts with chats
+  const chatsWithUnreadCount = chats.map((chat) => {
+    const unreadCount = unreadCounts.find((uc) => uc.chatId.equals(chat._id));
+    return {
+      ...chat.toObject(),
+      unreadCount: unreadCount ? unreadCount.unreadCount : 0,
+    };
+  });
 
   return res.status(200).json({
     statusCode: 200,
