@@ -633,7 +633,7 @@ const getAllChats = asyncHandler(async (req, res) => {
       },
     },
   ]);
-
+  console.log(chatsWithUnreadCount);
   // Merge unread message count with chats
   const chats = chatsWithUnreadCount.map((chat) => {
     const unreadCount =
