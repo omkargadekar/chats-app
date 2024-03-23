@@ -593,7 +593,7 @@ const removeParticipantFromGroupChat = asyncHandler(async (req, res) => {
 });
 
 const getAllChats = asyncHandler(async (req, res) => {
-  const chats = await Chat.aggregate([
+  const chatsWithUnreadCount = await Chat.aggregate([
     {
       $match: {
         participants: { $elemMatch: { $eq: req.user._id } }, // get all chats that have logged in user as a participant
@@ -605,7 +605,37 @@ const getAllChats = asyncHandler(async (req, res) => {
       },
     },
     ...chatCommonAggregation(),
+    {
+      $lookup: {
+        from: "chatmessages", // Assuming the collection name is 'chatmessages'
+        let: { chatId: "$_id", userId: req.user._id },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$chat", "$$chatId"] },
+                  { $eq: ["$recipient", "$$userId"] },
+                  { $eq: ["$read", false] },
+                ],
+              },
+            },
+          },
+          {
+            $count: "unreadCount",
+          },
+        ],
+        as: "unreadCounts",
+      },
+    },
   ]);
+
+  // Merge unread message count with chats
+  const chats = chatsWithUnreadCount.map((chat) => {
+    const unreadCount =
+      chat.unreadCounts.length > 0 ? chat.unreadCounts[0].unreadCount : 0;
+    return { ...chat, unreadCount };
+  });
 
   return res
     .status(200)

@@ -111,6 +111,17 @@ const sendMessage = asyncHandler(async (req, res) => {
     { new: true }
   );
 
+  // Update unread message count for all participants except the sender
+  await Chat.updateMany(
+    {
+      _id: chatId,
+      participants: { $ne: req.user._id }, // Exclude the sender
+    },
+    {
+      $inc: { "unreadCounts.$[].count": 1 }, // Increment unread count for all participants
+    }
+  );
+
   // structure the message
   const messages = await ChatMessage.aggregate([
     {
