@@ -101,9 +101,10 @@ const sendMessage = asyncHandler(async (req, res) => {
     attachments: messageFiles,
   });
 
-  // Increment unread count for all participants except the sender
   selectedChat.participants.forEach(async (participantId) => {
     if (participantId.toString() !== req.user._id.toString()) {
+      console.log("Updating unread count for participant:", participantId);
+
       await Chat.updateOne(
         {
           _id: chatId,
@@ -112,6 +113,11 @@ const sendMessage = asyncHandler(async (req, res) => {
         {
           $inc: { "unreadCounts.$.count": 1 },
         }
+      );
+
+      console.log(
+        "Unread count updated successfully for participant:",
+        participantId
       );
 
       // Log the updated unread count for the participant
