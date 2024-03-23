@@ -170,6 +170,10 @@ const sendMessage = asyncHandler(async (req, res) => {
       receivedMessage
     );
   });
+
+  const unreadCount = chat.unreadCounts.find(
+    (unread) => unread.user.toString() === req.user._id.toString()
+  ).count;
   return res.status(201).json({
     statusCode: 201,
     data: receivedMessage,
