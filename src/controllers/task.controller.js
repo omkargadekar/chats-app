@@ -45,6 +45,7 @@ const createTask = asyncHandler(async (req, res) => {
 const getAllTasks = asyncHandler(async (req, res) => {
   try {
     const userId = req.user._id;
+    console.log(userId);
     const tasks = await Task.find({ userId });
     res.status(200).json(tasks);
   } catch (error) {
