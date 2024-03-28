@@ -17,7 +17,7 @@ router.route("/create-task").post(
   upload.single("image"), //  task images should be uploaded with the form field name 'image'.
   createTask
 );
-router.route("/task").get(getAllTasks);
+router.route("/task/:userId").get(getAllTasks);
 router.route("/task/:taskId").get(getSingleTask);
 router.route("/delete-task/:taskId").delete(deleteTask);
 router.route("/update-task/:taskId").put(upload.single("image"), updateTask);

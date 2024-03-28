@@ -2,13 +2,27 @@ import Task from "../models/task.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
+const getColor = (status) => {
+  switch (status) {
+    case "Completed":
+      return "#008000";
+    case "InComplete":
+      return "#FF0000";
+    case "InProcess":
+      return "#FFA500";
+    default:
+      return "Unknown";
+  }
+};
+
 const createTask = asyncHandler(async (req, res) => {
   try {
     const userId = req.user._id;
-    const { textContent, status, completionPercentage } = req.body;
+    const { textContent, status } = req.body;
+
     let imageUrl = "";
 
-    if (!textContent || !status || !completionPercentage) {
+    if (!textContent || !status) {
       return res
         .status(400)
         .json({ message: "Please provide all required fields." });
@@ -31,7 +45,7 @@ const createTask = asyncHandler(async (req, res) => {
       textContent,
       imageUrl,
       status,
-      completionPercentage,
+      color: getColor(status),
     });
 
     res.status(201).json({ message: "Task created successfully", task });
@@ -54,12 +68,24 @@ const getAllTasks = asyncHandler(async (req, res) => {
       .json({ message: "Error fetching tasks", error: error.message });
   }
 });
+const getAllTasksByUserId = asyncHandler(async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log(userId);
+    const tasks = await Task.find({ userId });
+    res.status(200).json(tasks);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error fetching tasks", error: error.message });
+  }
+});
 
 const updateTask = asyncHandler(async (req, res) => {
   try {
     const { taskId } = req.params;
-    const { textContent, status, completionPercentage } = req.body;
-    let updateData = { textContent, status, completionPercentage };
+    const { textContent, status } = req.body;
+    let updateData = { textContent, status, color: getColor(status) };
 
     // Optionally handle image replacement
     if (req.file) {
@@ -123,4 +149,11 @@ const getSingleTask = asyncHandler(async (req, res) => {
   }
 });
 
-export { createTask, getAllTasks, deleteTask, updateTask, getSingleTask };
+export {
+  createTask,
+  getAllTasks,
+  deleteTask,
+  updateTask,
+  getSingleTask,
+  getAllTasksByUserId,
+};

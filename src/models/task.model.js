@@ -17,20 +17,12 @@ const taskSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: [
-        "Started Working",
-        "Completed Backend",
-        "Completed Backend Testing",
-        "Completed Frontend Testing",
-        "Integration Completed",
-      ],
-      default: "Started Working",
+      enum: ["Completed", "InComplete", "InProcess"],
+      default: "InProcess",
     },
-    completionPercentage: {
-      type: Number,
+    color: {
+      type: String,
       required: true,
-      min: 0,
-      max: 100,
     },
   },
   { timestamps: true }
