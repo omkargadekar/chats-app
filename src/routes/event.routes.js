@@ -14,12 +14,12 @@ router.use(verifyJWT);
 
 router.route("/create-event").post(createEvent);
 
-router.route("/all-events").get(getAllEvents);
+router.route("/all-events/:userId").get(getAllEvents);
 
-router.route("/:id/show").get(getSingleEvent);
+router.route("/:eventId/show").get(getSingleEvent);
 
-router.route("/:id/update").put(updateEvent);
+router.route("/:eventId/update").put(updateEvent);
 
-router.route("/:id/delete").delete(deleteEvent);
+router.route("/:eventId/delete").delete(deleteEvent);
 
 export default router;

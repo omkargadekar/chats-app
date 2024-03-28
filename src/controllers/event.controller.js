@@ -1,8 +1,9 @@
 import Event from "../models/event.model.js";
 
 async function getAllEvents(req, res) {
+  const { userId } = req.params;
   try {
-    const events = await Event.find({});
+    const events = await Event.find({ userId });
     res.status(200).json(events);
   } catch (err) {
     res
@@ -13,7 +14,7 @@ async function getAllEvents(req, res) {
 
 async function getSingleEvent(req, res) {
   try {
-    const event = await Event.findById(req.params.id);
+    const event = await Event.findById(req.params.eventId);
     if (!event) {
       return res.status(404).json({ message: "Event not found" });
     }
@@ -26,7 +27,8 @@ async function getSingleEvent(req, res) {
 }
 
 async function createEvent(req, res) {
-  const newEvent = new Event(req.body);
+  const { userId, title, start, end, describe } = req.body;
+  const newEvent = new Event({ userId, title, start, end, describe });
   try {
     const savedEvent = await newEvent.save();
     res.status(201).json(savedEvent);
@@ -40,7 +42,7 @@ async function createEvent(req, res) {
 async function updateEvent(req, res) {
   try {
     const updatedEvent = await Event.findByIdAndUpdate(
-      req.params.id,
+      req.params.eventId,
       req.body,
       { new: true, runValidators: true }
     );
@@ -57,7 +59,7 @@ async function updateEvent(req, res) {
 
 async function deleteEvent(req, res) {
   try {
-    const deletedEvent = await Event.findByIdAndDelete(req.params.id);
+    const deletedEvent = await Event.findByIdAndDelete(req.params.eventId);
     if (!deletedEvent) {
       return res.status(404).json({ message: "Event not found" });
     }

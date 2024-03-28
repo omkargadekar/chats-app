@@ -39,6 +39,11 @@ import mongoose, { Schema } from "mongoose";
 
 const EventSchema = new Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     title: {
       type: String,
       required: [true, "Please write a title for your event"],
@@ -46,21 +51,19 @@ const EventSchema = new Schema(
     start: {
       type: Date,
       required: [true, "Please Insert The Start of your event"],
-      // Set a minimum value of the current date and time
+
       min: [new Date(), "Event start can't be before now!!"],
     },
     end: {
       type: Date,
       validate: {
         validator: function (value) {
-          // Ensure start is defined and value is at least one hour ahead of start
           return (
             this.start && value >= new Date(this.start.getTime() + 3600000)
           );
         },
         message: "Event End must be at least one hour ahead of the start time",
       },
-      // Other properties...
     },
     describe: { type: String },
   },
