@@ -55,6 +55,46 @@ const createTask = asyncHandler(async (req, res) => {
       .json({ message: "Error creating task", error: error.message });
   }
 });
+const createTaskByUserParams = asyncHandler(async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { textContent, status } = req.body;
+
+    let imageUrl = "";
+
+    if (!textContent || !status) {
+      return res
+        .status(400)
+        .json({ message: "Please provide all required fields." });
+    }
+
+    if (req.file) {
+      const localFilePath = req.file.path;
+      const uploadResponse = await uploadOnCloudinary(localFilePath);
+      if (uploadResponse && uploadResponse.url) {
+        imageUrl = uploadResponse.url;
+      } else {
+        return res
+          .status(500)
+          .json({ message: "Failed to upload image to Cloudinary." });
+      }
+    }
+
+    const task = await Task.create({
+      userId,
+      textContent,
+      imageUrl,
+      status,
+      color: getColor(status),
+    });
+
+    res.status(201).json({ message: "Task created successfully", task });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error creating task", error: error.message });
+  }
+});
 
 const getAllTasks = asyncHandler(async (req, res) => {
   try {
@@ -156,4 +196,5 @@ export {
   updateTask,
   getSingleTask,
   getAllTasksByUserId,
+  createTaskByUserParams,
 };
