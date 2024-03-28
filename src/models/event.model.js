@@ -51,16 +51,16 @@ const EventSchema = new Schema(
     },
     end: {
       type: Date,
-      required: [true, "Please Insert The End of your event"],
-      // Validate that the end date is at least one hour ahead of the start date
       validate: {
         validator: function (value) {
-          const startPlusOneHour = new Date(this.start);
-          startPlusOneHour.setHours(startPlusOneHour.getHours() + 1);
-          return value >= startPlusOneHour;
+          // Ensure start is defined and value is at least one hour ahead of start
+          return (
+            this.start && value >= new Date(this.start.getTime() + 3600000)
+          );
         },
         message: "Event End must be at least one hour ahead of the start time",
       },
+      // Other properties...
     },
     describe: { type: String },
   },
