@@ -12,7 +12,7 @@ router.use(verifyJWT);
 
 router.route("/add-license").post(createLicense);
 
-router.route("/:id").get(getAllLicenses);
+router.route("/all").get(getAllLicenses);
 
 router.route("/:id").get(getSingleLicense);
 
