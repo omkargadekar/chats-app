@@ -71,7 +71,7 @@ app.use(limiter);
 
 app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
-app.use(express.static("public")); // configure static file to save images locally
+app.use(express.static("public"));
 app.use(cookieParser());
 
 app.get("/", (req, res) => {
@@ -90,6 +90,8 @@ import eventRouter from "./routes/event.routes.js";
 import newUserRoute from "./routes/newUser.routes.js";
 import licenseRute from "./routes/license.routes.js";
 import taskRoute from "./routes/task.routes.js";
+import dashMessageRoute from "./routes/dashMessage.routes.js";
+import dashChatRoute from "./routes/dashChat.routes.js";
 
 //routes declaration
 app.use("/api/v1/users", userRouter);
@@ -99,6 +101,8 @@ app.use("/api/v1/events", eventRouter);
 app.use("/api/v2/users", newUserRoute);
 app.use("/api/v2/license", licenseRute);
 app.use("/api/v1/tasks", taskRoute);
+app.use("/api/v1/dashMsg", dashMessageRoute);
+app.use("/api/v1/dashChat", dashChatRoute);
 
 // app.post("/api/v1/seed/chat-app", seedUsers, seedChatApp);
 
@@ -112,6 +116,38 @@ app.use(
     customSiteTitle: "CHAT APP Darren",
   })
 );
+
+io.on("dashconnection", (socket) => {
+  console.log("Connected to socket.io");
+  socket.on("setup", (userData) => {
+    socket.join(userData._id);
+    socket.emit("connected");
+  });
+
+  socket.on("join chat", (room) => {
+    socket.join(room);
+    console.log("User Joined Room: " + room);
+  });
+  socket.on("dashtyping", (room) => socket.in(room).emit("typing"));
+  socket.on("stop typing", (room) => socket.in(room).emit("stop typing"));
+
+  socket.on("new message", (newMessageRecieved) => {
+    var chat = newMessageRecieved.chat;
+
+    if (!chat.users) return console.log("chat.users not defined");
+
+    chat.users.forEach((user) => {
+      if (user._id == newMessageRecieved.sender._id) return;
+
+      socket.in(user._id).emit("message recieved", newMessageRecieved);
+    });
+  });
+
+  socket.off("setup", () => {
+    console.log("USER DISCONNECTED");
+    socket.leave(userData._id);
+  });
+});
 
 // http://localhost:8000/api/v1/users/register
 
