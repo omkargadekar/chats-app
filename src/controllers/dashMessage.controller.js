@@ -38,7 +38,8 @@ const sendMessage = asyncHandler(async (req, res) => {
       chat: chatId,
     };
 
-    var message = await ChatMessage.create(newMessage);
+    var message = new ChatMessage(newMessage);
+    message.save();
 
     message = await message.populate("sender");
     message = await message.populate("chat");
