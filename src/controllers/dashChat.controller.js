@@ -1,5 +1,6 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import DashChat from "../models/dashChat.model.js";
+import { Chat } from "../models/chat.model.js";
 import { User } from "../models/user.model.js";
 
 //@description     Create or fetch One to One Chat
@@ -13,7 +14,7 @@ const accessChat = asyncHandler(async (req, res) => {
     return res.sendStatus(400);
   }
 
-  var isChat = await DashChat.find({
+  var isChat = await Chat.find({
     isGroupChat: false,
     $and: [
       { users: { $elemMatch: { $eq: req.user._id } } },
@@ -38,8 +39,8 @@ const accessChat = asyncHandler(async (req, res) => {
     };
 
     try {
-      const createdChat = await DashChat.create(chatData);
-      const FullChat = await DashChat.findOne({
+      const createdChat = await Chat.create(chatData);
+      const FullChat = await Chat.findOne({
         _id: createdChat._id,
       }).populate("users", "-password");
       res.status(200).json(FullChat);
@@ -55,7 +56,7 @@ const accessChat = asyncHandler(async (req, res) => {
 //@access          Protected
 const fetchChats = asyncHandler(async (req, res) => {
   try {
-    DashChat.find({ users: { $elemMatch: { $eq: req.user._id } } })
+    Chat.find({ users: { $elemMatch: { $eq: req.user._id } } })
       .populate("users", "-password")
       .populate("groupAdmin", "-password")
       .populate("latestMessage")
@@ -92,14 +93,14 @@ const createGroupChat = asyncHandler(async (req, res) => {
   users.push(req.user);
 
   try {
-    const groupChat = await DashChat.create({
+    const groupChat = await Chat.create({
       chatName: req.body.name,
       users: users,
       isGroupChat: true,
       groupAdmin: req.user,
     });
 
-    const fullGroupChat = await DashChat.findOne({ _id: groupChat._id })
+    const fullGroupChat = await Chat.findOne({ _id: groupChat._id })
       .populate("users", "-password")
       .populate("groupAdmin", "-password");
 
@@ -116,7 +117,7 @@ const createGroupChat = asyncHandler(async (req, res) => {
 const renameGroup = asyncHandler(async (req, res) => {
   const { chatId, chatName } = req.body;
 
-  const updatedChat = await DashChat.findByIdAndUpdate(
+  const updatedChat = await Chat.findByIdAndUpdate(
     chatId,
     {
       chatName: chatName,
@@ -144,7 +145,7 @@ const removeFromGroup = asyncHandler(async (req, res) => {
 
   // check if the requester is admin
 
-  const removed = await DashChat.findByIdAndUpdate(
+  const removed = await Chat.findByIdAndUpdate(
     chatId,
     {
       $pull: { users: userId },
@@ -172,7 +173,7 @@ const addToGroup = asyncHandler(async (req, res) => {
 
   // check if the requester is admin
 
-  const added = await DashChat.findByIdAndUpdate(
+  const added = await Chat.findByIdAndUpdate(
     chatId,
     {
       $push: { users: userId },

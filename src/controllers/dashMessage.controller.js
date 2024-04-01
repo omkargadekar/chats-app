@@ -1,14 +1,16 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
-import DashMessage from "../models/dashMessage.model.js";
+
+import { ChatMessage } from "../models/message.model.js";
 import { User } from "../models/user.model.js";
-import DashChat from "../models/dashChat.model.js";
+
+import { Chat } from "../models/chat.model.js";
 
 //@description     Get all Messages
 //@route           GET /api/Message/:chatId
 //@access          Protected
 const allMessages = asyncHandler(async (req, res) => {
   try {
-    const messages = await DashMessage.find({ chat: req.params.chatId })
+    const messages = await ChatMessage.find({ chat: req.params.chatId })
       .populate("sender", "name pic email")
       .populate("chat");
     res.json(messages);
@@ -36,7 +38,7 @@ const sendMessage = asyncHandler(async (req, res) => {
       chat: chatId,
     };
 
-    var message = await DashMessage.create(newMessage);
+    var message = await ChatMessage.create(newMessage);
 
     message = await message.populate("sender");
     message = await message.populate("chat");
@@ -45,7 +47,7 @@ const sendMessage = asyncHandler(async (req, res) => {
       select: "name pic email",
     });
 
-    await DashChat.findByIdAndUpdate(req.body.chatId, {
+    await Chat.findByIdAndUpdate(req.body.chatId, {
       latestMessage: message,
     });
 
