@@ -25,8 +25,6 @@ const sendMessage = asyncHandler(async (req, res) => {
   try {
     const { userId, content, chatId } = req.body;
 
-    console.log(userId, content, chatId);
-
     if (!content || !chatId) {
       console.log("Invalid data passed into request");
       return res.sendStatus(400);
@@ -37,8 +35,6 @@ const sendMessage = asyncHandler(async (req, res) => {
       content: content,
       chat: chatId,
     };
-
-    console.log(newMessage);
 
     var message = await DashMessage.create(newMessage);
 
