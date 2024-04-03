@@ -662,11 +662,13 @@ const getAllChats = asyncHandler(async (req, res) => {
       recipient: req.user._id,
       read: false,
     });
+
     return { chatId: chat._id, unreadCount };
   });
 
   // Wait for all unread count queries to complete
   const unreadCounts = await Promise.all(unreadCountsPromises);
+  console.log(unreadCounts);
 
   // Merge unread message counts with chats
   const chatsWithUnreadCount = chats.map((chat) => {

@@ -101,36 +101,85 @@ const sendMessage = asyncHandler(async (req, res) => {
     attachments: messageFiles,
   });
 
-  selectedChat.participants.forEach(async (participantId) => {
+  // selectedChat.participants.forEach(async (participantId) => {
+  //   if (participantId.toString() !== req.user._id.toString()) {
+  //     console.log("Updating unread count for participant:", participantId);
+
+  //     await Chat.updateOne(
+  //       {
+  //         _id: chatId,
+  //         "unreadCounts.user": participantId,
+  //       },
+  //       {
+  //         $inc: { "unreadCounts.$.count": 1 },
+  //       }
+  //     );
+
+  //     console.log(
+  //       "Unread count updated successfully for participant:",
+  //       participantId
+  //     );
+
+  //     // Log the updated unread count for the participant
+  //     const updatedChat = await Chat.findById(chatId);
+  //     const unreadCount = updatedChat.unreadCounts.find(
+  //       (unread) => unread.user.toString() === participantId.toString()
+  //     )?.count;
+  //     // ).count
+  //     console.log(
+  //       `Unread count for participant ${participantId}:`,
+  //       unreadCount
+  //     );
+  //   }
+  // });
+  for (const participantId of selectedChat.participants) {
     if (participantId.toString() !== req.user._id.toString()) {
       console.log("Updating unread count for participant:", participantId);
 
-      await Chat.updateOne(
-        {
-          _id: chatId,
-          "unreadCounts.user": participantId,
-        },
-        {
-          $inc: { "unreadCounts.$.count": 1 },
-        }
-      );
+      try {
+        const updateResult = await Chat.updateOne(
+          {
+            _id: chatId,
+            "unreadCounts.user": participantId,
+          },
+          {
+            $inc: { "unreadCounts.$.count": 1 },
+          }
+        );
 
-      console.log(
-        "Unread count updated successfully for participant:",
-        participantId
-      );
+        console.log("Update result:", updateResult);
+
+        if (updateResult.nModified === 0) {
+          console.log(
+            "Participant not found in unread counts. Adding new unread count entry."
+          );
+          await Chat.updateOne(
+            { _id: chatId },
+            { $push: { unreadCounts: { user: participantId, count: 1 } } }
+          );
+        }
+
+        console.log(
+          "Unread count updated successfully for participant:",
+          participantId
+        );
+      } catch (error) {
+        console.error("Error updating unread count:", error);
+        // Handle the error as needed, e.g., log it, send an error response, etc.
+      }
 
       // Log the updated unread count for the participant
       const updatedChat = await Chat.findById(chatId);
       const unreadCount = updatedChat.unreadCounts.find(
         (unread) => unread.user.toString() === participantId.toString()
-      ).count;
+      )?.count;
+
       console.log(
         `Unread count for participant ${participantId}:`,
         unreadCount
       );
     }
-  });
+  }
 
   console.log("After updating unread counts:", selectedChat);
 
@@ -146,7 +195,9 @@ const sendMessage = asyncHandler(async (req, res) => {
 
   const unreadCount = chat.unreadCounts.find(
     (unread) => unread.user.toString() === req.user._id.toString()
-  ).count;
+  )?.count;
+
+  // ).count;
   // Update unread message count for all participants except the sender
   // await Chat.updateMany(
   //   {
